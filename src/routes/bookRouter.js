@@ -1,11 +1,24 @@
 const express = require('express');
+const Book = require('../models/bookModel');
 const bookRouter = express.Router();
 
-bookRouter
-    .get('/', (req,res) => {
-        res.json(...)
+bookRouter.route('/')
+    .get((req, res) => {
+        Book.find({}, (err, books) => {
+            res.json(books)
+        })
     })
-    .get('/2', (req,res) => {
-        res.json(...)
-    })
+    .post((req, res) => {
+        let book = new Book({title: 'The Bull', author: 'Saki'});
+        book.save();
+        res.status(201).send(book) 
+    });
+
+bookRouter.route('/:bookId')
+    .get((req, res) => {
+        Book.findById(req.params.bookId, (err, book) => {
+            res.json(book)
+        })
+    });
+
 export default bookRouter;
