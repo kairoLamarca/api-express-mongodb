@@ -1,6 +1,18 @@
 const express = require('express');
 const Book = require('../models/bookModel');
-const bookRouter = express.Router();
+let bookRouter = express.Router();
+
+bookRouter.use('/:bookId', (req, res, next) => {
+    Book.findById(req.params.bookId, (err, book) => {
+        if (err)
+            res.status(500).send(err)
+        else {
+            req.book = book;
+            next()
+        }
+    })
+
+})
 
 bookRouter.route('/')
     .get((req, res) => {
@@ -9,16 +21,40 @@ bookRouter.route('/')
         })
     })
     .post((req, res) => {
-        let book = new Book({title: 'The Bull', author: 'Saki'});
+        let book = new Book(req.body);
         book.save();
-        res.status(201).send(book) 
-    });
+        res.status(201).send(book)
+    })
 
 bookRouter.route('/:bookId')
     .get((req, res) => {
-        Book.findById(req.params.bookId, (err, book) => {
-            res.json(book)
+        res.json(req.book)
+    }) // end get Books/:bookId 
+    .put((req, res) => {
+        req.book.title = req.body.title;
+        req.book.author = req.body.author;
+        req.book.save()
+        res.json(req.book)
+    })
+    .patch((req, res) => {
+        if (req.body._id) {
+            delete req.body._id;
+        }
+        for (let p in req.body) {
+            req.book[p] = req.body[p]
+        }
+        req.book.save()
+        res.json(req.book)
+    })//patch
+    .delete((req, res) => {
+        req.book.remove(err => {
+            if (err) {
+                res.status(500).send(err)
+            }
+            else {
+                res.status(204).send('removed')
+            }
         })
-    });
+    })//delete
 
-export default bookRouter;
+module.exports = bookRouter;
